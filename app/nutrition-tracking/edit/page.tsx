@@ -2,67 +2,104 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MealItem, useMeals } from "@/context/food-context"
+import { Activity, ArrowLeft, Utensils } from "lucide-react"
 import Link from "next/link"
-import { ArrowLeft, Calendar, Utensils, Activity } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
-import Navbar from "@/components/navbar"
-import { useFoodItems } from "@/context/food-context"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function EditFoodItem() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { foodItems, updateFoodItem } = useFoodItems()
-
-  const itemId = searchParams.get("id")
+  const { meals } = useMeals()
+  const [itemId, setItemId] = useState("")
   const [itemName, setItemName] = useState("")
-  const [calories, setCalories] = useState("")
-  const [carbs, setCarbs] = useState("")
-  const [fat, setFat] = useState("")
-  const [protein, setProtein] = useState("")
-  const [date, setDate] = useState("")
+  const [image, setImage] = useState("")
+  const [nutrients, setNutrients] = useState<{ [key: string]: number }>({
+    calories: 0,
+    carbs: 0,
+    fat: 0,
+    protein: 0,
+  })
 
   useEffect(() => {
-    if (itemId) {
-      const item = foodItems.find((item) => item.id === itemId)
-      if (item) {
-        setItemName(item.name)
-        setCalories(item.calories.toString())
-        setCarbs(item.carbs.toString())
-        setFat(item.fat.toString())
-        setProtein(item.protein.toString())
-        setDate(item.date)
+    const storedItem = localStorage.getItem("selectedFoodItem")
+  
+    if (storedItem) {
+      try {
+        const parsedItem: MealItem = JSON.parse(storedItem)
+  
+        const nutrientsMap: { [key: string]: number } = {}
+        parsedItem.nutrients?.forEach((nutrient) => {
+          nutrientsMap[nutrient.name.toLowerCase()] = nutrient.amount
+        })
+  
+        setItemId(parsedItem._id || "")
+        setItemName(parsedItem.name || "")
+        setImage(parsedItem.imageUrl || "")
+  
+        setNutrients({
+          calories: nutrientsMap["calories"] ?? 0,
+          carbs: nutrientsMap["carbs"] ?? 0,
+          fat: nutrientsMap["fat"] ?? 0,
+          protein: nutrientsMap["protein"] ?? 0,
+        })
+      } catch (err) {
+        console.error("Failed to parse selected item from localStorage", err)
       }
     }
-  }, [itemId, foodItems])
+  }, [])
+  
+  
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!itemId) return
-
+  
+    if (!itemId || !itemName.trim()) {
+      alert("Name is required.")
+      return
+    }
+  
     const updatedItem = {
       id: itemId,
-      name: itemName,
-      calories: Number.parseInt(calories) || 0,
-      carbs: Number.parseInt(carbs) || 0,
-      fat: Number.parseInt(fat) || 0,
-      protein: Number.parseInt(protein) || 0,
-      date: date,
-      image: foodItems.find((item) => item.id === itemId)?.image || "/placeholder.svg",
+      name: itemName.trim() || "Untitled Item",
+      image: image.trim() || "https://via.placeholder.com/150", // Default image if none provided
+      nutrients: [
+        { name: "Calories", unit: "kcal", amount: nutrients.calories || 0 },
+        { name: "Carbs", unit: "g", amount: nutrients.carbs || 0 },
+        { name: "Fat", unit: "g", amount: nutrients.fat || 0 },
+        { name: "Protein", unit: "g", amount: nutrients.protein || 0 },
+      ],
     }
-
-    updateFoodItem(itemId, updatedItem)
-    router.push("/nutrition-tracking")
+  
+    try {
+      const response = await fetch("/api/meals/edit", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedItem),
+      })
+  
+      if (response.ok) {
+        localStorage.removeItem("selectedFoodItem")
+        router.push("/nutrition-tracking")
+      } else {
+        const errorData = await response.json()
+        alert(`Error: ${errorData.message}`)
+      }
+    } catch (error) {
+      console.error("Update error:", error)
+      alert("An error occurred while updating the item.")
+    }
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
 
-      {/* Header */}
       <div className="p-4 flex items-center">
         <Link href="/nutrition-tracking">
           <ArrowLeft className="h-6 w-6" />
@@ -74,9 +111,14 @@ export default function EditFoodItem() {
         <p className="text-center text-gray-500 mb-8">Update your meal information</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="itemName">
+            Item Name
+          </label>
           <div className="relative">
             <Utensils className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input
+              id="itemName"
               type="text"
               placeholder="Item name"
               className="pl-10 bg-gray-100"
@@ -85,65 +127,87 @@ export default function EditFoodItem() {
               required
             />
           </div>
+        </div>
 
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="imageUrl">
+            Image URL
+          </label>
           <div className="relative">
             <Activity className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input
-              type="number"
-              placeholder="Calories"
+              id="imageUrl"
+              type="text"
+              placeholder="Image URL"
               className="pl-10 bg-gray-100"
-              value={calories}
-              onChange={(e) => setCalories(e.target.value)}
-              required
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
             />
           </div>
+        </div>
 
-          <div className="grid grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nutrients</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
+              <label className="text-xs text-gray-600 mb-1 block" htmlFor="calories">Calories (kcal)</label>
               <Input
+                id="calories"
                 type="number"
-                placeholder="Carbs (g)"
+                placeholder="Calories"
                 className="bg-gray-100"
-                value={carbs}
-                onChange={(e) => setCarbs(e.target.value)}
+                value={nutrients.calories}
+                onChange={(e) =>
+                  setNutrients({ ...nutrients, calories: parseInt(e.target.value) || 0 })
+                }
               />
             </div>
             <div>
+              <label className="text-xs text-gray-600 mb-1 block" htmlFor="carbs">Carbs (g)</label>
               <Input
+                id="carbs"
                 type="number"
-                placeholder="Fat (g)"
+                placeholder="Carbs"
                 className="bg-gray-100"
-                value={fat}
-                onChange={(e) => setFat(e.target.value)}
+                value={nutrients.carbs}
+                onChange={(e) =>
+                  setNutrients({ ...nutrients, carbs: parseInt(e.target.value) || 0 })
+                }
               />
             </div>
             <div>
+              <label className="text-xs text-gray-600 mb-1 block" htmlFor="fat">Fat (g)</label>
               <Input
+                id="fat"
                 type="number"
-                placeholder="Protein (g)"
+                placeholder="Fat"
                 className="bg-gray-100"
-                value={protein}
-                onChange={(e) => setProtein(e.target.value)}
+                value={nutrients.fat}
+                onChange={(e) =>
+                  setNutrients({ ...nutrients, fat: parseInt(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block" htmlFor="protein">Protein (g)</label>
+              <Input
+                id="protein"
+                type="number"
+                placeholder="Protein"
+                className="bg-gray-100"
+                value={nutrients.protein}
+                onChange={(e) =>
+                  setNutrients({ ...nutrients, protein: parseInt(e.target.value) || 0 })
+                }
               />
             </div>
           </div>
+        </div>
 
-          <div className="relative">
-            <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input
-              type="date"
-              placeholder="Date"
-              className="pl-10 bg-gray-100"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
-          </div>
-
-          <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
-            Update
-          </Button>
-        </form>
+        <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white">
+          Update
+        </Button>
+      </form>
       </div>
     </div>
   )

@@ -1,41 +1,43 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import Navbar from "@/components/navbar"
-import { useAuth } from "@/context/auth-context"
+import Navbar from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/auth-context";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Signup() {
-  const router = useRouter()
-  const { signup } = useAuth()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [username, setUsername] = useState("")
-  const [agreed, setAgreed] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const { signup } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
 
     if (!agreed) {
-      setError("You must agree to the Terms & Conditions")
-      return
+      setError("You must agree to the Terms & Conditions");
+      return;
     }
 
     try {
-      await signup(email, password, username)
-      router.push("/dining-options")
-    } catch (err) {
-      setError("Failed to create an account. Please try again.")
+      if (!signup) {
+        throw new Error("Signup function is not defined in context");
+      }
+
+      await signup(email, password, username);
+      router.push("/dining-options");
+    } catch (err: any) {
+      setError(err.message || "Failed to create an account. Please try again.");
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -45,11 +47,15 @@ export default function Signup() {
         <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Create Account</h1>
-            <p className="text-gray-600 mt-2">Create your account to start tracking your nutrition.</p>
+            <p className="text-gray-600 mt-2">
+              Create your account to start tracking your nutrition.
+            </p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">{error}</div>
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              {error}
+            </div>
           )}
 
           <form onSubmit={handleSignup} className="space-y-6">
@@ -99,7 +105,7 @@ export default function Signup() {
               <Checkbox
                 id="terms"
                 checked={agreed}
-                onCheckedChange={(checked) => setAgreed(checked as boolean)}
+                onCheckedChange={(checked) => setAgreed(Boolean(checked))}
                 className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
               />
               <label htmlFor="terms" className="text-sm text-gray-600">
@@ -127,5 +133,5 @@ export default function Signup() {
         </div>
       </div>
     </div>
-  )
+  );
 }

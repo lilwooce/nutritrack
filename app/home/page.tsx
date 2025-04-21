@@ -4,13 +4,14 @@ import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { AuthProvider } from "@/context/auth-context"
 import { BarChart3, HomeIcon, PieChart, Search, Utensils } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
-
 interface DiningHall {
   id: string
+  num: number
   name: string
   description: string
   foodItems: number
@@ -23,6 +24,7 @@ export default function Home() {
   const diningHalls: DiningHall[] = [
     {
       id: "bolton",
+      num: 1,
       name: "Bolton",
       description: "",
       foodItems: 0,
@@ -30,6 +32,7 @@ export default function Home() {
     },
     {
       id: "village-summit",
+      num: 5,
       name: "The Village Summit",
       description: "",
       foodItems: 0,
@@ -37,6 +40,7 @@ export default function Home() {
     },
     {
       id: "oglethorpe",
+      num: 2,
       name: "Oglethorpe",
       description: "",
       foodItems: 0,
@@ -44,14 +48,24 @@ export default function Home() {
     },
     {
       id: "snelling",
-      name: "snelling",
+      num: 3,
+      name: "Snelling",
       description: "",
       foodItems: 0,
       image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-i2grjvBT8QrclXYD1QrJau7jNWGqKe.png",
     },
+    {
+      id: "niche",
+      num: 3,
+      name: "The Niche",
+      description: "",
+      foodItems: 0,
+      image: "https://assets.nutrislice.com/asset/serve/image/jpg/219730",
+    },
   ]
 
   return (
+    <AuthProvider>
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
 
@@ -82,9 +96,11 @@ export default function Home() {
               <div className="flex items-start p-4">
                 <div className="flex-1">
                   <h3 className="font-medium text-lg">{hall.name}</h3>
-                  <Button variant="outline" className="mt-2 text-red-600 border-red-600 hover:bg-red-50">
-                    View Menu
-                  </Button>
+                  <Link href={`https://uga.nutrislice.com/menu/dining-hall-${hall.num}`} passHref target="_blank">
+                        <Button variant="outline" className="mt-2 text-red-600 border-red-600 hover:bg-red-50">
+                          View Menu
+                        </Button>
+                      </Link>
                 </div>
                 <div className="ml-4 w-24 h-24 relative rounded-md overflow-hidden">
                   <Image src={hall.image || "/placeholder.svg"} alt={hall.name} fill className="object-cover" />
@@ -115,5 +131,5 @@ export default function Home() {
         </Link>
       </div>
     </div>
-  )
+    </AuthProvider>)
 }

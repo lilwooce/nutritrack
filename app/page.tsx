@@ -1,10 +1,14 @@
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Navbar from "@/components/navbar"
+import Navbar from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import connectMongoDB from "@/config/mongodb";
+import { AuthProvider } from "@/context/auth-context";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function SplashScreen() {
+  connectMongoDB();
   return (
+    <AuthProvider>
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="flex flex-col items-center justify-between flex-1 bg-purple-950 relative overflow-hidden">
@@ -45,7 +49,7 @@ export default function SplashScreen() {
 
         {/* Get Started button */}
         <div className="w-full max-w-md mx-auto px-6 mb-12 z-10">
-          <Link href="/login">
+          <Link href="/home">
             <Button className="w-full py-6 text-white bg-red-600 hover:bg-red-700 rounded-md font-medium text-lg">
               Get Started
             </Button>
@@ -53,5 +57,6 @@ export default function SplashScreen() {
         </div>
       </div>
     </div>
+  </AuthProvider>
   )
 }

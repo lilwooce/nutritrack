@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { AuthProvider, useAuth } from "@/context/auth-context"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import Navbar from "@/components/navbar"
-import { useAuth } from "@/context/auth-context"
+import { useState } from "react"
 
 export default function Login() {
   const router = useRouter()
@@ -30,6 +30,7 @@ export default function Login() {
   }
 
   return (
+    <AuthProvider>
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
 
@@ -94,5 +95,6 @@ export default function Login() {
         </div>
       </div>
     </div>
+    </AuthProvider>
   )
 }

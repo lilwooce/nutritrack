@@ -1,13 +1,15 @@
-"use client"
+'use client';
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/context/auth-context"
+import { Button } from "@/components/ui/button";
+import { AuthProvider, useAuth } from "@/context/auth-context";
+import Link from "next/link";
 
 export default function Navbar() {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth();
+  
 
   return (
+    <AuthProvider>
     <header className="bg-white border-b">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
@@ -28,7 +30,7 @@ export default function Navbar() {
         <div>
           {user ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm hidden md:inline-block">Welcome, {user.username}</span>
+              <span className="text-sm hidden md:inline-block">Hello, {user.username}</span>
               <Button variant="outline" size="sm" onClick={logout}>
                 Logout
               </Button>
@@ -50,5 +52,6 @@ export default function Navbar() {
         </div>
       </div>
     </header>
-  )
+    </AuthProvider>
+  );
 }

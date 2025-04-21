@@ -1,78 +1,97 @@
-"use client"
+'use client';
 
-import { useRouter } from "next/navigation"; // <-- import router
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { useRouter } from 'next/navigation';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-interface User {
-  id: string
-  username: string
-  email: string
+interface UserType {
+  _id: string;
+  username: string;
+  email: string;
+  // Add other user properties as needed
 }
 
 interface AuthContextType {
-  user: User | null
-  login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, username: string) => Promise<void>
-  logout: () => void
-  isLoading: boolean
+  user: UserType | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  signup: (email: string, password: string, username: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter() // <-- initialize router
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
+  const [user, setUser] = useState<UserType | null>(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        console.log("User found in localStorage:", storedUser);
+        return storedUser ? JSON.parse(storedUser) : null;
+      }
+    }
+    return null;
+  });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
     }
-    setIsLoading(false)
-  }, [])
+  }, []);
 
   const login = async (email: string, password: string) => {
-    const mockUser = {
-      id: "1",
-      username: email.split("@")[0],
-      email,
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Login failed');
     }
 
-    setUser(mockUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
-    return Promise.resolve()
-  }
+    const data = await response.json();
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    router.push('/home');
+  };
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' }); // You'll create this route next
+    setUser(null);
+    localStorage.removeItem('user');
+    router.push('/');
+  };
 
   const signup = async (email: string, password: string, username: string) => {
-    const mockUser = {
-      id: "1",
-      username,
-      email,
-    }
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, username }),
+    });
 
-    setUser(mockUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
-    return Promise.resolve()
-  }
-
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem("user")
-    router.push("/") // <-- redirect to homepage
-  }
+    if (!res.ok) throw new Error("Signup failed");
+    const data = await res.json();
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    router.push('/home');
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, signup }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
-}
+  return context;
+};

@@ -2,18 +2,20 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import Navbar from "@/components/navbar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/context/auth-context"
+import { useMeals } from "@/context/food-context"
+import { Activity, ArrowLeft, Calendar, Utensils } from "lucide-react"
 import Link from "next/link"
-import { ArrowLeft, Calendar, Utensils, Activity } from "lucide-react"
 import { useRouter } from "next/navigation"
-import Navbar from "@/components/navbar"
-import { useFoodItems } from "@/context/food-context"
+import { useState } from "react"
 
 export default function AddFoodItem() {
   const router = useRouter()
-  const { addFoodItem } = useFoodItems()
+  const { addMeal } = useMeals()
+  const { user } = useAuth();
   const [itemName, setItemName] = useState("")
   const [calories, setCalories] = useState("")
   const [carbs, setCarbs] = useState("")
@@ -21,22 +23,44 @@ export default function AddFoodItem() {
   const [protein, setProtein] = useState("")
   const [date, setDate] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    if (!user) {
+      router.push("/")
+      return <p className="text-center mt-10">Please log in to add a meal.</p>
+    }
     e.preventDefault()
 
-    const newItem = {
-      id: Date.now().toString(),
+    const todayEST = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/New_York",
+    });
+
+    const newMeal = {
       name: itemName,
-      calories: Number.parseInt(calories) || 0,
-      carbs: Number.parseInt(carbs) || 0,
-      fat: Number.parseInt(fat) || 0,
-      protein: Number.parseInt(protein) || 0,
-      date: date,
-      image: "/placeholder.svg",
+      description: "",
+      category: "Lunch",
+      isVegan: false,
+      isVegetarian: false,
+      isGlutenFree: false,
+      imageUrl: "/placeholder.svg",
+      dateAvailable: todayEST,
+      dateAdded: todayEST,
+      diningLocation: "Main Dining Hall",
+      createdBy: user._id, // replace with dynamic user ID if available
+      nutrients: [
+        { name: "Calories", unit: "kcal", amount: parseInt(calories) || 0 },
+        { name: "Carbs", unit: "g", amount: parseInt(carbs) || 0 },
+        { name: "Fat", unit: "g", amount: parseInt(fat) || 0 },
+        { name: "Protein", unit: "g", amount: parseInt(protein) || 0 },
+      ],
+      tags: [],
     }
 
-    addFoodItem(newItem)
-    router.push("/nutrition-tracking")
+    try {
+      await addMeal(newMeal)
+      router.push("/nutrition-tracking")
+    } catch (error) {
+      console.error("Failed to add meal:", error)
+    }
   }
 
   return (
@@ -80,40 +104,33 @@ export default function AddFoodItem() {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Input
-                type="number"
-                placeholder="Carbs (g)"
-                className="bg-gray-100"
-                value={carbs}
-                onChange={(e) => setCarbs(e.target.value)}
-              />
-            </div>
-            <div>
-              <Input
-                type="number"
-                placeholder="Fat (g)"
-                className="bg-gray-100"
-                value={fat}
-                onChange={(e) => setFat(e.target.value)}
-              />
-            </div>
-            <div>
-              <Input
-                type="number"
-                placeholder="Protein (g)"
-                className="bg-gray-100"
-                value={protein}
-                onChange={(e) => setProtein(e.target.value)}
-              />
-            </div>
+            <Input
+              type="number"
+              placeholder="Carbs (g)"
+              className="bg-gray-100"
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Fat (g)"
+              className="bg-gray-100"
+              value={fat}
+              onChange={(e) => setFat(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Protein (g)"
+              className="bg-gray-100"
+              value={protein}
+              onChange={(e) => setProtein(e.target.value)}
+            />
           </div>
 
           <div className="relative">
             <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input
               type="date"
-              placeholder="Date"
               className="pl-10 bg-gray-100"
               value={date}
               onChange={(e) => setDate(e.target.value)}
