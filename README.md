@@ -37,7 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Project Description
 
-Our app helps students manage and track their meals at UGA dining halls.
+Our app helps students manage and track their meals at UGA dining halls to maintain a better/healthier life.
 
 ## Team Members
 
