@@ -36,7 +36,7 @@ export default function NutritionTracking() {
         if (storedUser) {
           setIsLoggedIn(true);
           const user = JSON.parse(storedUser);
-          const response = await fetch(`/api/meals?username=${user.username}`);
+          const response = await fetch(`/api/meals/user?user=${user._id}`);
           const data: Meal[] = await response.json();
           setMeals(data);
         } else {
