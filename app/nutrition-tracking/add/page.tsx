@@ -10,7 +10,7 @@ import { useMeals } from "@/context/food-context"
 import { Activity, ArrowLeft, Calendar, Utensils } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export default function AddFoodItem() {
   const router = useRouter()
@@ -30,7 +30,7 @@ export default function AddFoodItem() {
     }
     e.preventDefault()
 
-    const todayEST = new Date().toLocaleDateString("en-CA", {
+    const todayEST = new Date().toLocaleDateString("en-US", {
       timeZone: "America/New_York",
     });
 
@@ -43,7 +43,7 @@ export default function AddFoodItem() {
       isGlutenFree: false,
       imageUrl: "/placeholder.svg",
       dateAvailable: todayEST,
-      dateAdded: todayEST,
+      dateAdded: date,
       diningLocation: "Main Dining Hall",
       createdBy: user._id, // replace with dynamic user ID if available
       nutrients: [
@@ -62,6 +62,17 @@ export default function AddFoodItem() {
       console.error("Failed to add meal:", error)
     }
   }
+
+  useEffect(() => {
+    const todayInEST = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
+    setDate(todayInEST); // e.g., "2025-04-23"
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -134,7 +145,6 @@ export default function AddFoodItem() {
               className="pl-10 bg-gray-100"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              required
             />
           </div>
 

@@ -1,137 +1,135 @@
-"use client";
+"use client"
 
-import Navbar from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/context/auth-context";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import type React from "react"
 
-export default function Signup() {
-  const router = useRouter();
-  const { signup } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [error, setError] = useState("");
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Building, Lock, Mail } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
-  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+export default function CreateAccount() {
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [username, setUsername] = useState("")
+  const [agreed, setAgreed] = useState(false)
+
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    if (!agreed) {
-      setError("You must agree to the Terms & Conditions");
-      return;
-    }
-
-    try {
-      if (!signup) {
-        throw new Error("Signup function is not defined in context");
+  
+    if (email && password && username && agreed) {
+      try {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            username,
+          }),
+        });
+  
+        if (response.ok) {
+          // Redirect to home page upon successful signup
+          router.push('/home');
+        } else {
+          const errorData = await response.json();
+          // Handle error (e.g., display error message)
+          console.error('Signup failed:', errorData.message);
+        }
+      } catch (error) {
+        console.error('An unexpected error occurred:', error);
       }
-
-      await signup(email, password, username);
-      router.push("/dining-options");
-    } catch (err: any) {
-      setError(err.message || "Failed to create an account. Please try again.");
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="flex flex-col min-h-screen bg-white">
+      {/* Status bar */}
+      <div className="bg-black text-white p-2 flex items-center justify-between">
+        <div>9:41</div>
+        <div className="flex items-center gap-1">
+          <div className="h-2.5 w-2.5 rounded-full bg-white"></div>
+          <div className="h-2.5 w-2.5 rounded-full bg-white"></div>
+          <div className="h-2.5 w-2.5 rounded-full bg-white"></div>
+        </div>
+      </div>
 
-      <div className="flex flex-1 items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Create Account</h1>
-            <p className="text-gray-600 mt-2">
-              Create your account to start tracking your nutrition.
-            </p>
+      {/* Main content */}
+      <div className="flex-1 p-6 max-w-md mx-auto w-full">
+        <h1 className="text-2xl font-bold text-center mt-8 mb-2">Create Account</h1>
+        <p className="text-center text-gray-600 mb-8">Create your account to start tracking your nutrition.</p>
+
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Input
+              type="email"
+              placeholder="Your email address"
+              className="pl-10"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSignup} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreed}
-                onCheckedChange={(checked) => setAgreed(Boolean(checked))}
-                className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-              />
-              <label htmlFor="terms" className="text-sm text-gray-600">
-                I agree with Terms & Conditions
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-red-600 hover:bg-red-700"
-              disabled={!email || !password || !username || !agreed}
-            >
-              Sign Up
-            </Button>
-          </form>
-
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link href="/login" className="text-red-600 hover:text-red-500 font-medium">
-                Log in
-              </Link>
-            </p>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Input
+              type="password"
+              placeholder="Create a password"
+              className="pl-10"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
+
+          <div className="relative">
+            <Building className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Your username affiliation"
+              className="pl-10"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="terms"
+              checked={agreed}
+              onCheckedChange={(checked) => setAgreed(checked as boolean)}
+              className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-600">
+              I agree with Terms & Conditions
+            </label>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-6"
+            disabled={!email || !password || !username || !agreed}
+          >
+            Sign Up
+          </Button>
+        </form>
+
+        <div className="text-center mt-6">
+          <span className="text-gray-600 text-sm">Already registered? </span>
+          <Link href="/login" className="text-red-600 text-sm font-medium">
+            Log in
+          </Link>
         </div>
       </div>
     </div>
-  );
+  )
 }

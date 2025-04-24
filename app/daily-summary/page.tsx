@@ -26,7 +26,14 @@ export default function DailySummary() {
   const [loading, setLoading] = useState(false); // To track loading state
 
   // Compute “today” in EST
-  const todayUTC = new Date().toISOString().split("T")[0]; // 'YYYY-MM-DD'
+  const todayEST = new Date().toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
+  });
+
+  function formatDateToMMDDYYYY(dateStr = ""): string {
+    const [year, month, day] = dateStr.split("T")[0].split("-");
+    return `${parseInt(month)}/${parseInt(day)}/${year}`;
+  }
 
   // Filter only meals whose dateAdded falls on todayEST
   const todaysMeals = useMemo(() => {
@@ -35,19 +42,21 @@ export default function DailySummary() {
       return [];
     }
 
-    console.log("Filtering meals for today's date:", todayUTC);
+    console.log("Filtering meals for today's date:", todayEST);
     console.log("Filtering meals for user:", user.username);
 
     return meals.filter((meal) => {
-      if (!meal.dateAvailable || meal.createdBy !== user._id) {
+      if (!meal.dateAdded || meal.createdBy !== user._id) {
         console.log("Skipping meal due to missing dateAvailable or user mismatch:", meal);
         return false;
       }
 
-      const mealDate = new Date(meal.dateAvailable).toISOString().split("T")[0];
-      return mealDate == todayUTC;
+      const mealDate = formatDateToMMDDYYYY(meal.dateAdded);
+      
+      console.log("Meal date:", mealDate, "Today's date:", todayEST);
+      return mealDate == todayEST;
     });
-  }, [meals, todayUTC, user]);
+  }, [meals, todayEST, user]);
 
   console.log("Today's meals:", todaysMeals);
 
@@ -154,7 +163,7 @@ export default function DailySummary() {
 
       {/* Summary content */}
       <div className="flex-1 p-4 space-y-6">
-        <h2 className="text-xl font-semibold">Summary for {todayUTC}</h2>
+        <h2 className="text-xl font-semibold">Summary for {todayEST}</h2>
 
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <div className="text-center mb-4">
