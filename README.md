@@ -2,16 +2,25 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First create a .env file in this format 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Secret key for JWT authentication
+JWT_SECRET=your-super-secret-jwt-key
+
+# MongoDB database connection string
+MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-db-name?retryWrites=true&w=majority
+
+# OpenAI API key (used for AI-related features)
+NEXT_PUBLIC_OPENAI_API_KEY=your-openai-api-key
+
+# Node.js environment (development, production, etc.)
+NODE_ENV=development
+
+
+
+second, run the development server:
+
+npm install --force
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
